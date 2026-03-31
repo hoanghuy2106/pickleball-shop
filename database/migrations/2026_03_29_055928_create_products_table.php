@@ -9,17 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-public function up()
-{
-    Schema::create('products', function (Blueprint $table) {
-        $table->id();
-        $table->string('name');
-        $table->string('brand')->nullable();
-        $table->bigInteger('price');
-        $table->string('image')->nullable();
-        $table->timestamps();
-    });
-}
+    public function up()
+    {
+        Schema::create('products', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->string('brand')->nullable();
+            $table->bigInteger('price');
+            $table->string('color')->nullable();        // THÊM DÒNG NÀY
+            $table->text('description')->nullable();   // THÊM DÒNG NÀY (Dùng kiểu text cho nội dung dài)
+            $table->string('image')->nullable();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

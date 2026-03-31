@@ -6,14 +6,15 @@ use Illuminate\Http\Request;
 
 class CartController extends Controller
 {
-    // Trang hiển thị giỏ hàng
+    // 1. Trang hiển thị giỏ hàng
     public function index()
     {
         $cart = session()->get('cart', []);
+        // Đảm bảo file view của ông nằm đúng đường dẫn resources/views/products/cart.blade.php
         return view('products.cart', compact('cart'));
     }
 
-    // Hàm thêm vào giỏ hàng (AJAX gọi đến đây)
+    // 2. Thêm vào giỏ hàng (Dùng cho nút 30%, 70%)
     public function add(Request $request)
     {
         $cart = session()->get('cart', []);
@@ -26,7 +27,7 @@ class CartController extends Controller
                 "name" => $request->name,
                 "brand" => $request->brand,
                 "price" => $request->price,
-                "image" => $request->image, // Lưu URL ảnh tuyệt đối
+                "image" => $request->image,
                 "quantity" => 1
             ];
         }
@@ -37,5 +38,29 @@ class CartController extends Controller
             'count' => count($cart),
             'message' => 'Đã thêm vào giỏ hàng!'
         ]);
+    }
+
+    // 3. XÓA SẢN PHẨM (Huy thiếu cái này nên lỗi nè)
+    public function remove($id)
+    {
+        $cart = session()->get('cart', []);
+
+        if(isset($cart[$id])) {
+            unset($cart[$id]);
+            session()->put('cart', $cart);
+        }
+
+        return redirect()->back()->with('success', 'Đã xóa sản phẩm khỏi giỏ hàng!');
+    }
+
+    // 4. CẬP NHẬT SỐ LƯỢNG (Dành cho nút + -)
+    public function update(Request $request)
+    {
+        if($request->id && $request->quantity) {
+            $cart = session()->get('cart');
+            $cart[$request->id]["quantity"] = $request->quantity;
+            session()->put('cart', $cart);
+            return response()->json(['message' => 'Cập nhật thành công!']);
+        }
     }
 }

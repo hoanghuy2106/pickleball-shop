@@ -2,88 +2,102 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Sửa sản phẩm - Pickleball Master</title>
+    <title>Sửa sản phẩm - SPORT Q&A Elite</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0a0a0a; color: #eee; }
+        /* Tùy chỉnh thanh cuộn cho sành điệu */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #111; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+    </style>
 </head>
-<body class="bg-gray-100 py-10">
-    <div class="max-w-3xl mx-auto bg-white p-8 rounded-3xl shadow-lg">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                Chỉnh sửa sản phẩm 🛠️
+<body class="antialiased py-10 px-6 overflow-x-hidden">
+
+    <div class="blob absolute w-96 h-96 bg-orange-600/10 rounded-full blur-[100px] top-[-100px] left-[-100px] z-[-1]"></div>
+
+    <div class="max-w-3xl mx-auto bg-[#111] p-10 rounded-[2.5rem] border border-white/5 shadow-2xl relative">
+        <div class="flex justify-between items-center mb-10 pb-4 border-b border-white/5">
+            <h2 class="text-3xl font-black text-white flex items-center gap-3 tracking-tighter uppercase italic">
+                Cập nhật chiến vợt <span class="text-orange-500">🛠️</span>
             </h2>
-            <span class="text-xs font-mono text-gray-400 bg-gray-100 px-3 py-1 rounded-full">ID: #{{ $product->id }}</span>
+            <span class="text-xs font-black font-mono text-gray-500 bg-white/5 px-4 py-1.5 rounded-full border border-white/10 tracking-widest">
+                ID: #{{ $product->id }}
+            </span>
         </div>
         
-        <form action="{{ route('products.update', $product->id) }}" method="POST" enctype="multipart/form-data">
+        <form action="{{ route('products.update', $product->id) }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             @method('PUT')
 
-            <div class="mb-4">
-                <label class="block text-sm font-bold mb-2 text-gray-700">Tên sản phẩm</label>
+            <div class="premium-input-group">
+                <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Tên sản phẩm hàng hiệu</label>
                 <input type="text" name="name" value="{{ $product->name }}" 
-                       class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition" required>
+                       class="w-full p-4 bg-[#1a1a1a] border border-white/10 text-white rounded-2xl outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition font-medium" required>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
-                    <label class="block text-sm font-bold mb-2 text-gray-700">Thương hiệu</label>
+                    <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Thương hiệu</label>
                     <input type="text" name="brand" value="{{ $product->brand }}" 
-                           class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition" placeholder="VD: Joola, Selkirk...">
+                           class="w-full p-4 bg-[#1a1a1a] border border-white/10 text-white rounded-2xl outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition font-medium" placeholder="VD: JOOLA...">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-bold mb-2 text-gray-700">Màu sắc</label>
+                    <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Màu sắc Elite</label>
                     <input type="text" name="color" value="{{ $product->color }}" 
-                           class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition" placeholder="VD: Đen, Lime, Hồng...">
+                           class="w-full p-4 bg-[#1a1a1a] border border-white/10 text-white rounded-2xl outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition font-medium" placeholder="VD: Carbon Black...">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-bold mb-2 text-gray-700">Giá tiền (VNĐ)</label>
+                    <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Giá niêm yết (VNĐ)</label>
                     <input type="number" name="price" value="{{ $product->price }}" 
-                           class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition" required>
+                           class="w-full p-4 bg-[#1a1a1a] border border-white/10 text-orange-400 rounded-2xl outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition font-bold text-lg tracking-tight" required>
                 </div>
             </div>
 
-            <div class="mb-4">
-                <label class="block text-sm font-bold mb-2 text-gray-700">Thông tin chi tiết của vợt</label>
-                <textarea name="description" rows="4" 
-                          class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-orange-500 transition" 
-                          placeholder="Nhập thông số kỹ thuật, công nghệ lõi, độ nhám mặt vợt...">{{ $product->description }}</textarea>
+            <div class="premium-input-group">
+                <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Thông số công nghệ & Mô tả</label>
+                <textarea name="description" rows="5" 
+                          class="w-full p-4 bg-[#1a1a1a] border border-white/10 text-white rounded-2xl outline-none focus:border-orange-500/50 focus:ring-1 focus:ring-orange-500/50 transition font-medium leading-relaxed italic" 
+                          placeholder="VD: Công nghệ lõi Carbon Friction Surface...">{{ $product->description }}</textarea>
             </div>
 
-            <div class="mb-6">
-                <label class="block text-sm font-bold mb-2 text-gray-700">Hình ảnh sản phẩm</label>
+            <div class="premium-input-group">
+                <label class="block text-xs font-black mb-2.5 text-gray-400 uppercase tracking-widest">Hình ảnh siêu phẩm</label>
                 
-                <div class="flex items-center gap-6 p-4 border-2 border-dashed rounded-2xl bg-gray-50 relative">
-                    <div class="w-24 h-24 bg-white rounded-lg border flex items-center justify-center overflow-hidden shrink-0 relative shadow-sm">
+                <div class="flex items-center gap-8 p-6 border-2 border-dashed border-white/10 rounded-[2rem] bg-black/30 relative hover:border-orange-500/20 transition-colors">
+                    <div class="w-32 h-32 bg-[#1a1a1a] rounded-2xl border border-white/10 flex items-center justify-center overflow-hidden shrink-0 relative shadow-inner group">
                         @if($product->image)
-                            <img id="current-img" src="{{ asset('storage/' . $product->image) }}" class="object-cover w-full h-full">
+                            <img id="current-img" src="{{ asset('storage/' . $product->image) }}" class="object-cover w-full h-full opacity-80 group-hover:opacity-100 transition">
                         @else
-                            <span id="placeholder-icon" class="text-2xl text-gray-300 font-bold">🏓</span>
+                            <span id="placeholder-icon" class="text-4xl text-gray-700 font-bold">🏸</span>
                         @endif
-                        <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-cover bg-white">
+                        <img id="image-preview" class="hidden absolute inset-0 w-full h-full object-cover bg-[#1a1a1a]">
                     </div>
 
-                    <div class="flex-1">
-                        <p class="text-xs text-gray-500 mb-2 font-medium">Thay đổi hình ảnh (nếu cần):</p>
+                    <div class="flex-1 space-y-3">
+                        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Thay áo mới cho vợt (PNG/JPG):</p>
                         <input type="file" name="image" accept="image/*" onchange="previewImage(event)"
-                               class="block w-full text-sm text-gray-500 
-                                      file:mr-4 file:py-2 file:px-4
-                                      file:rounded-full file:border-0
-                                      file:text-sm file:font-semibold
-                                      file:bg-orange-50 file:text-orange-700
-                                      hover:file:bg-orange-100 cursor-pointer">
+                               class="block w-full text-xs text-gray-500 
+                                      file:mr-5 file:py-2.5 file:px-5
+                                      file:rounded-full file:border-white/10 file:border
+                                      file:text-[10px] file:font-black file:uppercase file:tracking-widest
+                                      file:bg-white/5 file:text-white
+                                      hover:file:bg-orange-600 hover:file:border-orange-600 transition cursor-pointer">
                     </div>
                 </div>
             </div>
 
-            <div class="flex gap-4">
-                <button type="submit" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100 transition-all hover:-translate-y-0.5">
-                    Cập nhật sản phẩm
+            <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-white/5">
+                <button type="submit" class="flex-1 bg-white text-black py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 hover:text-white transition active:scale-95 shadow-xl hover:shadow-orange-500/20">
+                    Cập nhật siêu phẩm →
                 </button>
                 <a href="{{ route('products.index') }}" 
-                   class="flex-1 bg-gray-100 text-gray-600 py-3 rounded-xl font-bold text-center hover:bg-gray-200 transition">
-                    Quay lại
+                   class="flex-1 bg-[#1a1a1a] text-gray-400 py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-center hover:bg-white/5 hover:text-white transition border border-white/10">
+                    Hủy & Quay lại
                 </a>
             </div>
         </form>
@@ -94,13 +108,15 @@
             const input = event.target;
             const preview = document.getElementById('image-preview');
             const currentImg = document.getElementById('current-img');
+            const placeholder = document.getElementById('placeholder-icon');
 
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     preview.src = e.target.result;
                     preview.classList.remove('hidden');
-                    if (currentImg) currentImg.classList.add('opacity-30'); 
+                    if (currentImg) currentImg.classList.add('opacity-10'); 
+                    if (placeholder) placeholder.classList.add('hidden');
                 }
                 reader.readAsDataURL(input.files[0]);
             }

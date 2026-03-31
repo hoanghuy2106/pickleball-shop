@@ -12,6 +12,7 @@ Route::get('/contact', function () { return view('contact'); });
 
 // 2. Quản lý Sản phẩm
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 
 Route::middleware('auth')->group(function () {
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
@@ -28,16 +29,17 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// 4. Giỏ hàng (Đã sửa logic để fix lỗi ảnh khi F5)
+// 4. GIỎ HÀNG (Đã bổ sung đầy đủ Xóa và Cập nhật)
+
+// Hiển thị giỏ hàng
 Route::get('/cart', function () {
     $cart = session()->get('cart', []);
     return view('products.cart', compact('cart'));
 })->name('cart.index');
 
+// Thêm sản phẩm (Dùng cho AJAX từ trang danh sách)
 Route::post('/add-to-cart', function (Request $request) {
     $cart = session()->get('cart', []);
-    
-    // Sử dụng ID hoặc Name làm Key để tránh trùng lặp và giữ link ảnh chuẩn
     $productName = $request->name;
     
     if(isset($cart[$productName])) {
@@ -47,13 +49,36 @@ Route::post('/add-to-cart', function (Request $request) {
             'name' => $request->name,
             'brand' => $request->brand,
             'price' => $request->price,
-            'image' => $request->image, // Nhận URL tuyệt đối từ JS
+            'image' => $request->image,
             'quantity' => 1
         ];
     }
-    
     session()->put('cart', $cart);
-    
-    // Trả về tổng số lượng sản phẩm khác nhau trong giỏ
     return response()->json(['count' => count($cart)]);
 })->name('cart.add');
+
+// XÓA SẢN PHẨM (Nút thùng rác cần cái này)
+Route::post('/cart/remove/{id}', function ($id) {
+    $cart = session()->get('cart', []);
+    if(isset($cart[$id])) {
+        unset($cart[$id]);
+        session()->put('cart', $cart);
+    }
+    return redirect()->back()->with('success', 'Đã xóa!');
+})->name('cart.remove');
+
+// CẬP NHẬT SỐ LƯỢNG (Nếu Huy làm nút + - bằng AJAX)
+Route::patch('/cart/update', function (Request $request) {
+    $cart = session()->get('cart', []);
+    if($request->id && $request->quantity) {
+        $cart[$request->id]['quantity'] = $request->quantity;
+        session()->put('cart', $cart);
+        return response()->json(['message' => 'Updated']);
+    }
+})->name('cart.update');
+Route::middleware('auth')->group(function () {
+    // ... các route khác của ông ...
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+});
+// Thêm ->name('profile.update') vào cuối Route POST
+Route::post('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
