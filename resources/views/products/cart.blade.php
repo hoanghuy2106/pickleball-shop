@@ -26,7 +26,7 @@
 
     <div class="relative z-10 mb-10 text-right md:text-left">
         <h2 class="text-5xl md:text-7xl font-black tracking-tighter mb-4 text-white italic uppercase leading-none">
-            Giỏ hàng <span class="text-orange-600">.</span>
+            Giỏ hàng <span class="text-orange-600"></span>
         </h2>
         <p class="text-gray-500 font-bold uppercase tracking-[0.3em] text-[10px]">
             Hệ thống đang điều phối <span id="cart-count" class="text-orange-500 underline decoration-2 underline-offset-4">{{ count($cart) }}</span> sản phẩm

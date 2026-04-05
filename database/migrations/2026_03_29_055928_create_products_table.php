@@ -9,16 +9,20 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
+ public function up()
     {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('brand')->nullable();
             $table->bigInteger('price');
-            $table->string('color')->nullable();        // THÊM DÒNG NÀY
-            $table->text('description')->nullable();   // THÊM DÒNG NÀY (Dùng kiểu text cho nội dung dài)
-            $table->string('image')->nullable();
+            $table->string('color')->nullable();
+            $table->text('description')->nullable(); 
+            $table->string('image')->nullable(); // Ảnh chính (đại diện)
+            
+            // --- THÊM DÒNG NÀY ĐỂ CHẠY ĐƯỢC SLIDER ---
+            $table->json('gallery')->nullable(); // Lưu mảng nhiều ảnh phụ
+            
             $table->timestamps();
         });
     }

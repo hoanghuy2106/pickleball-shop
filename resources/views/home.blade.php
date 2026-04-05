@@ -25,30 +25,43 @@
             <a href="{{ url('/') }}">
                 <h1 class="text-2xl font-black text-orange-500 tracking-tighter">SPORT Q&A<span class="text-white"></span></h1>
             </a>
-            <div class="space-x-10 hidden md:flex items-center">
-                <a href="{{ url('/') }}" class="text-orange-500 font-bold text-[11px] uppercase tracking-widest">Trang chủ</a>
-                <a href="{{ url('/products') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition">Sản phẩm</a>
-                <a href="{{ url('/contact') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition">Liên hệ</a>
-                @auth
-<div class="flex items-center space-x-5 border-l pl-8 border-white/10">
-    <a href="{{ route('profile') }}" class="group flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-orange-600 group-hover:border-orange-600 transition-all duration-300">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-        </div>
+<div class="space-x-10 hidden md:flex items-center">
+    <a href="{{ url('/') }}" class="text-orange-500 font-bold text-[11px] uppercase tracking-widest">Trang chủ</a>
 
-        <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-orange-500 transition-all tracking-widest">
-            <b class="text-white group-hover:text-orange-500 transition-colors">{{ Auth::user()->name }}</b>
-        </span>
+    <a href="{{ url('/about') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition">Giới thiệu</a>
+
+<div class="relative group">
+    <a href="{{ route('explore') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition cursor-pointer">
+        Khám phá
     </a>
-    
 </div>
-    
+
+    <div class="relative group">
+    <a href="{{ route('support') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition cursor-pointer">
+        Hỗ trợ
+    </a>
 </div>
-                @else
-                    <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-7 py-2.5 rounded-full font-black text-[10px] tracking-widest shadow-lg hover:bg-orange-700 transition active:scale-95">ĐĂNG NHẬP</a>
-                @endguest
+    <a href="{{ url('/products') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition">Sản phẩm</a>
+
+    <a href="{{ url('/contact') }}" class="hover:text-orange-500 text-gray-400 font-bold text-[11px] uppercase tracking-widest transition">Liên hệ</a>
+
+    @auth
+        <div class="flex items-center space-x-5 border-l pl-8 border-white/10">
+            <a href="{{ route('profile') }}" class="group flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-orange-600 group-hover:border-orange-600 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400 group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+                <span class="text-[10px] font-bold uppercase text-gray-500 group-hover:text-orange-500 transition-all tracking-widest">
+                    <b class="text-white group-hover:text-orange-500 transition-colors">{{ Auth::user()->name }}</b>
+                </span>
+            </a>
+        </div>
+    @else
+        <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-7 py-2.5 rounded-full font-black text-[10px] tracking-widest shadow-lg hover:bg-orange-700 transition active:scale-95">ĐĂNG NHẬP</a>
+    @endauth
+</div>
             </div>
         </div>
     </nav>
@@ -160,22 +173,20 @@
             </div>
 
             <div>
-                <h3 class="text-white font-black text-[11px] uppercase tracking-[0.3em] mb-8 border-l-2 border-orange-500 pl-4">Khám phá</h3>
-                <ul class="space-y-4">
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Sản phẩm mới</a></li>
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Bảng xếp hạng Vợt</a></li>
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Cộng đồng SQ&A</a></li>
-                </ul>
-            </div>
+    <a href="{{ route('explore') }}" class="group inline-block">
+        <h3 class="text-white group-hover:text-orange-500 font-black text-[11px] uppercase tracking-[0.3em] mb-8 border-l-2 border-orange-500 group-hover:border-white pl-4 transition-all duration-300 cursor-pointer">
+            Khám phá
+        </h3>
+    </a>
+</div>
 
-            <div>
-                <h3 class="text-white font-black text-[11px] uppercase tracking-[0.3em] mb-8 border-l-2 border-orange-500 pl-4">Hỗ trợ</h3>
-                <ul class="space-y-4">
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Chính sách bảo hành</a></li>
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Vận chuyển hỏa tốc</a></li>
-                    <li><a href="#" class="text-gray-500 hover:text-orange-500 text-[10px] font-bold uppercase transition-colors italic tracking-widest">Hướng dẫn chọn vợt</a></li>
-                </ul>
-            </div>
+           <div>
+    <a href="{{ route('support') }}" class="group inline-block">
+        <h3 class="text-white group-hover:text-orange-500 font-black text-[11px] uppercase tracking-[0.3em] mb-8 border-l-2 border-orange-500 group-hover:border-white pl-4 transition-all duration-300 cursor-pointer">
+            Hỗ trợ
+        </h3>
+    </a>
+</div>
 
             <div class="bg-white/5 p-6 rounded-[2rem] border border-white/5 backdrop-blur-sm shadow-2xl">
                 <h3 class="text-white font-black text-[11px] uppercase tracking-[0.2em] mb-4">Gia nhập đội quân</h3>

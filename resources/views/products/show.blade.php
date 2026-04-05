@@ -9,6 +9,9 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: #eee; }
         .glass-effect { background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .slider-img { display: none; }
+        .slider-img.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body class="antialiased">
@@ -18,7 +21,7 @@
             <span class="transform group-hover:-translate-x-1 transition-transform">←</span> Quay lại cửa hàng
         </a>
         <a href="{{ url('/') }}">
-            <h1 class="text-xl font-black text-orange-500 tracking-tighter uppercase italic">SPORTQ&A<span class="text-white"></span></h1>
+            <h1 class="text-xl font-black text-orange-500 tracking-tighter uppercase italic">SPORTQ&A</h1>
         </a>
     </nav>
 
@@ -26,10 +29,37 @@
         <div class="grid lg:grid-cols-12 gap-12 items-start">
             
             <div class="lg:col-span-7 sticky top-32">
-                <div class="relative group rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 p-12 flex items-center justify-center shadow-2xl">
+                <div class="relative group rounded-[3rem] overflow-hidden bg-white/5 border border-white/5 p-12 flex items-center justify-center shadow-2xl min-h-[500px]">
                     <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-orange-600/10 via-transparent to-transparent opacity-50"></div>
-                    <img src="{{ $product->image ? asset('storage/' . $product->image) : 'https://via.placeholder.com/600' }}" 
-                         class="max-h-[600px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-700">
+                    
+                    @php
+                        // Gộp ảnh chính và các ảnh phụ vào một mảng duy nhất
+                        $allImages = [$product->image];
+                        if($product->gallery) {
+                            $allImages = array_merge($allImages, $product->gallery);
+                        }
+                    @endphp
+
+                    @foreach($allImages as $index => $img)
+                        <img src="{{ asset('storage/' . $img) }}" 
+                             class="slider-img {{ $index === 0 ? 'active' : '' }} max-h-[600px] w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] group-hover:scale-105 transition-transform duration-700"
+                             data-index="{{ $index }}">
+                    @endforeach
+
+                    @if(count($allImages) > 1)
+                        <button onclick="prevSlide()" class="absolute left-8 p-4 rounded-full bg-black/50 text-white hover:bg-orange-600 transition-all opacity-0 group-hover:opacity-100">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path></svg>
+                        </button>
+                        <button onclick="nextSlide()" class="absolute right-8 p-4 rounded-full bg-black/50 text-white hover:bg-orange-600 transition-all opacity-0 group-hover:opacity-100">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+
+                        <div class="absolute bottom-8 flex gap-2">
+                            @foreach($allImages as $index => $img)
+                                <div class="dot w-2 h-2 rounded-full transition-all {{ $index === 0 ? 'bg-orange-600 w-6' : 'bg-white/20' }}"></div>
+                            @endforeach
+                        </div>
+                    @endif
                     
                     <div class="absolute top-8 left-8 bg-orange-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest italic shadow-lg">
                         {{ $product->brand }} Official
@@ -63,26 +93,12 @@
                     </p>
                 </div>
 
-               <button onclick="handleBuyNow()" 
-        class="group relative w-full bg-orange-600 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic hover:bg-white hover:text-black transition-all duration-500 shadow-[0_20px_40px_rgba(249,115,22,0.2)] flex items-center justify-center gap-3">
-    <span>MUA NGAY</span>
-    <svg class="w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-</button>
+                <button onclick="handleBuyNow()" 
+                        class="group relative w-full bg-orange-600 text-white py-6 rounded-2xl font-black uppercase tracking-[0.2em] italic hover:bg-white hover:text-black transition-all duration-500 shadow-[0_20px_40px_rgba(249,115,22,0.2)] flex items-center justify-center gap-3">
+                    <span>MUA NGAY</span>
+                    <svg class="w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
 
-<script>
-    // Định nghĩa dữ liệu ở đây, VS Code sẽ không báo đỏ nữa
-    const productData = {
-        name: "{{ addslashes($product->name) }}",
-        brand: "{{ addslashes($product->brand) }}",
-        price: "{{ number_format($product->price) }}đ",
-        image: "{{ asset('storage/products/' . $product->image) }}"
-    };
-
-    function handleBuyNow() {
-        // Gọi lại hàm buyNow với các biến đã định nghĩa
-        buyNow(productData.name, productData.brand, productData.price, productData.image, '');
-    }
-</script>
                 <div class="mt-12 grid grid-cols-2 gap-6">
                     <div class="flex items-center gap-4 group">
                         <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:bg-orange-500 transition-colors">🛡️</div>
@@ -98,7 +114,45 @@
     </div>
 
     <script>
-        function buyNow(name, brand, price, image, description) {
+        // LOGIC SLIDER
+        let currentIndex = 0;
+        const slides = document.querySelectorAll('.slider-img');
+        const dots = document.querySelectorAll('.dot');
+
+        function showSlide(index) {
+            if (slides.length <= 1) return;
+            
+            slides[currentIndex].classList.remove('active');
+            if (dots.length > 0) {
+                dots[currentIndex].classList.remove('bg-orange-600', 'w-6');
+                dots[currentIndex].classList.add('bg-white/20');
+            }
+
+            currentIndex = (index + slides.length) % slides.length;
+
+            slides[currentIndex].classList.add('active');
+            if (dots.length > 0) {
+                dots[currentIndex].classList.add('bg-orange-600', 'w-6');
+                dots[currentIndex].classList.remove('bg-white/20');
+            }
+        }
+
+        function nextSlide() { showSlide(currentIndex + 1); }
+        function prevSlide() { showSlide(currentIndex - 1); }
+
+        // Mua hàng
+        const productData = {
+            name: "{{ addslashes($product->name) }}",
+            brand: "{{ addslashes($product->brand) }}",
+            price: "{{ number_format($product->price) }}đ",
+            image: "{{ asset('storage/' . $product->image) }}"
+        };
+
+        function handleBuyNow() {
+            buyNow(productData.name, productData.brand, productData.price, productData.image);
+        }
+
+        function buyNow(name, brand, price, image) {
             fetch('{{ route("cart.add") }}', {
                 method: 'POST',
                 headers: { 
@@ -117,6 +171,5 @@
             .catch(err => console.error("Lỗi:", err));
         }
     </script>
-
 </body>
 </html>

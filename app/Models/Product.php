@@ -9,6 +9,20 @@ class Product extends Model
 {
     use HasFactory;
 
-    // THÊM DÒNG NÀY ĐỂ CHO PHÉP LƯU DỮ LIỆU
-    protected $fillable = ['name', 'brand', 'price', 'image','color','description'];
+    // 1. THÊM 'gallery' VÀO ĐÂY
+    protected $fillable = [
+        'name', 
+        'brand', 
+        'price', 
+        'image', 
+        'gallery', // Cột lưu nhiều ảnh phụ
+        'color', 
+        'description'
+    ];
+
+    // 2. THÊM DÒNG NÀY (CỰC KỲ QUAN TRỌNG)
+    // Nó giúp tự động biến mảng ảnh thành JSON khi lưu và ngược lại
+    protected $casts = [
+        'gallery' => 'array',
+    ];
 }

@@ -8,61 +8,66 @@ use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
-    // CẬP NHẬT HÀM INDEX ĐỂ LỌC DỮ LIỆU
-public function index(Request $request)
-{
-    $query = Product::query();
+    public function index(Request $request)
+    {
+        $query = Product::query();
 
-// Sửa đoạn lọc danh mục thành thế này:
-if ($request->has('categories') && is_array($request->categories)) {
-    $query->where(function($q) use ($request) {
-        foreach ($request->categories as $category) {
-            $shortName = explode(' ', $category)[0]; 
-            // Chỉ tìm trong cột 'name' thôi, bỏ 'category' đi
-            $q->orWhere('name', 'LIKE', '%' . $shortName . '%'); 
+        if ($request->has('categories') && is_array($request->categories)) {
+            $query->where(function($q) use ($request) {
+                foreach ($request->categories as $category) {
+                    $shortName = explode(' ', $category)[0]; 
+                    $q->orWhere('name', 'LIKE', '%' . $shortName . '%'); 
+                }
+            });
         }
-    });
-}
 
-    // LỌC THƯƠNG HIỆU (Chuẩn hóa để tránh lỗi hoa/thường)
-    if ($request->filled('brand')) {
-        $query->where('brand', 'LIKE', $request->brand);
+        if ($request->filled('brand')) {
+            $query->where('brand', 'LIKE', $request->brand);
+        }
+
+        if ($request->filled('price_max')) {
+            $query->where('price', '<=', $request->price_max);
+        }
+
+        $products = $query->latest()->get();
+        return view('products', compact('products'));
     }
-
-    // LỌC GIÁ
-    if ($request->filled('price_max')) {
-        $query->where('price', '<=', $request->price_max);
-    }
-
-    $products = $query->latest()->get();
-    return view('products', compact('products'));
-}
 
     public function create()
     {
         return view('products.create');
     }
 
-    // Lưu sản phẩm mới
+    // --- SỬA HÀM STORE ĐỂ LƯU NHIỀU ẢNH ---
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'name' => 'required',
             'brand' => 'required',
-            'category' => 'nullable|string', // Huy nhớ thêm cột category vào validate nhé
             'price' => 'required|numeric',
-            'color' => 'nullable|string',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'image' => 'nullable|image|max:2048', // Bỏ mimes, chỉ cần dùng 'image' là Laravel tự hiểu các định dạng phổ biến
+            'gallery.*' => 'nullable|image|max:2048'
         ]);
 
+        $data = $request->all();
+
+        // Xử lý ảnh chính
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
+        // Xử lý mảng ảnh phụ (Gallery)
+        if ($request->hasFile('gallery')) {
+            $galleryPaths = [];
+            foreach ($request->file('gallery') as $file) {
+                $galleryPaths[] = $file->store('products', 'public');
+            }
+            $data['gallery'] = $galleryPaths; // Model tự động convert sang JSON nhờ $casts
+        }
+
         Product::create($data);
 
-        return redirect()->route('products.index')->with('success', 'Thêm sản phẩm thành công!');
+        return redirect()->route('products.index')->with('success', 'Thêm siêu phẩm thành công!');
     }
 
     public function edit($id)
@@ -71,26 +76,43 @@ if ($request->has('categories') && is_array($request->categories)) {
         return view('products.edit', compact('product'));
     }
 
-    // Cập nhật sản phẩm
+    // --- SỬA HÀM UPDATE ĐỂ CẬP NHẬT ẢNH PHỤ ---
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
         
-        $data = $request->validate([
+        $request->validate([
             'name' => 'required',
             'brand' => 'required',
-            'category' => 'nullable|string',
             'price' => 'required|numeric',
-            'color' => 'nullable|string',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'gallery.*' => 'nullable|image|mimes:jpeg,png,jpg|max:2048'
         ]);
 
+        $data = $request->all();
+
+        // Cập nhật ảnh chính
         if ($request->hasFile('image')) {
             if ($product->image) {
                 Storage::disk('public')->delete($product->image);
             }
             $data['image'] = $request->file('image')->store('products', 'public');
+        }
+
+        // Cập nhật ảnh phụ (Ghi đè hoặc thêm mới tùy bạn, ở đây là ghi đè danh sách cũ)
+        if ($request->hasFile('gallery')) {
+            // Xóa ảnh cũ trong kho (nếu cần tiết kiệm dung lượng)
+            if ($product->gallery) {
+                foreach ($product->gallery as $oldImg) {
+                    Storage::disk('public')->delete($oldImg);
+                }
+            }
+
+            $galleryPaths = [];
+            foreach ($request->file('gallery') as $file) {
+                $galleryPaths[] = $file->store('products', 'public');
+            }
+            $data['gallery'] = $galleryPaths;
         }
 
         $product->update($data);
@@ -101,12 +123,21 @@ if ($request->has('categories') && is_array($request->categories)) {
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
+        
+        // Xóa ảnh chính
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
-        $product->delete();
 
-        return back()->with('success', 'Đã xóa sản phẩm!');
+        // Xóa toàn bộ ảnh trong gallery
+        if ($product->gallery) {
+            foreach ($product->gallery as $img) {
+                Storage::disk('public')->delete($img);
+            }
+        }
+
+        $product->delete();
+        return back()->with('success', 'Đã xóa siêu phẩm khỏi hệ thống!');
     }
 
     public function show($id)

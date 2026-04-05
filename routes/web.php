@@ -5,39 +5,73 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-
-// 1. Trang chủ và Liên hệ
+use App\Http\Controllers\PageController;
+/*
+|--------------------------------------------------------------------------
+| 1. TRANG CHỦ & NỘI DUNG TĨNH
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/contact', function () { return view('contact'); });
+Route::get('/about', function () { return view('about'); })->name('introduction');
+Route::get('/contact', function () { return view('contact'); })->name('contact');
 
-// 2. Quản lý Sản phẩm
+
+/*
+|--------------------------------------------------------------------------
+| 2. QUẢN LÝ SẢN PHẨM (PUBLIC)
+|--------------------------------------------------------------------------
+*/
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 
+// QUAN TRỌNG: Phải để các route cố định (như /products/create) LÊN TRƯỚC các route có biến (như /{id})
+// Nếu không Laravel sẽ tưởng chữ "create" là một cái ID và báo lỗi.
+
+/*
+|--------------------------------------------------------------------------
+| 3. ROUTE YÊU CẦU ĐĂNG NHẬP (AUTH MIDDLEWARE)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('auth')->group(function () {
+    // 1. Chuyển Create lên đầu nhóm Auth
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
+    
+    // 2. Các thao tác sửa/xóa
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
+
+    // 3. Profile người dùng
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::post('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
 });
 
-// 3. Cụm chức năng Đăng nhập & Đăng ký
+// ROUTE SHOW (Chi tiết sản phẩm) PHẢI ĐỂ SAU CÙNG
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
+
+
+/*
+|--------------------------------------------------------------------------
+| 4. AUTHENTICATION (ĐĂNG NHẬP/ĐĂNG KÝ)
+|--------------------------------------------------------------------------
+*/
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login'); 
 Route::post('/login', [AuthController::class, 'login']); 
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-// 4. GIỎ HÀNG (Đã bổ sung đầy đủ Xóa và Cập nhật)
 
-// Hiển thị giỏ hàng
+/*
+|--------------------------------------------------------------------------
+| 5. GIỎ HÀNG (SESSION BASED)
+|--------------------------------------------------------------------------
+*/
 Route::get('/cart', function () {
     $cart = session()->get('cart', []);
     return view('products.cart', compact('cart'));
 })->name('cart.index');
 
-// Thêm sản phẩm (Dùng cho AJAX từ trang danh sách)
 Route::post('/add-to-cart', function (Request $request) {
     $cart = session()->get('cart', []);
     $productName = $request->name;
@@ -57,7 +91,6 @@ Route::post('/add-to-cart', function (Request $request) {
     return response()->json(['count' => count($cart)]);
 })->name('cart.add');
 
-// XÓA SẢN PHẨM (Nút thùng rác cần cái này)
 Route::post('/cart/remove/{id}', function ($id) {
     $cart = session()->get('cart', []);
     if(isset($cart[$id])) {
@@ -67,7 +100,6 @@ Route::post('/cart/remove/{id}', function ($id) {
     return redirect()->back()->with('success', 'Đã xóa!');
 })->name('cart.remove');
 
-// CẬP NHẬT SỐ LƯỢNG (Nếu Huy làm nút + - bằng AJAX)
 Route::patch('/cart/update', function (Request $request) {
     $cart = session()->get('cart', []);
     if($request->id && $request->quantity) {
@@ -76,9 +108,8 @@ Route::patch('/cart/update', function (Request $request) {
         return response()->json(['message' => 'Updated']);
     }
 })->name('cart.update');
-Route::middleware('auth')->group(function () {
-    // ... các route khác của ông ...
-    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
-});
-// Thêm ->name('profile.update') vào cuối Route POST
-Route::post('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
+// Route cho trang Khám phá
+Route::get('/explore', [PageController::class, 'explore'])->name('explore');
+
+// Route cho trang Hỗ trợ
+Route::get('/support', [PageController::class, 'support'])->name('support');
