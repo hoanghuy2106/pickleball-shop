@@ -12,6 +12,17 @@ class ProductController extends Controller
     {
         $query = Product::query();
 
+        // 1. Tìm kiếm theo từ khóa (Mới thêm)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', '%' . $search . '%')
+                  ->orWhere('brand', 'LIKE', '%' . $search . '%')
+                  ->orWhere('description', 'LIKE', '%' . $search . '%');
+            });
+        }
+
+        // 2. Lọc theo danh mục
         if ($request->has('categories') && is_array($request->categories)) {
             $query->where(function($q) use ($request) {
                 foreach ($request->categories as $category) {
@@ -21,12 +32,25 @@ class ProductController extends Controller
             });
         }
 
+        // 3. Lọc theo thương hiệu
         if ($request->filled('brand')) {
             $query->where('brand', 'LIKE', $request->brand);
         }
 
+        // 4. Lọc theo giá (Đã giữ nguyên logic của bạn)
         if ($request->filled('price_max')) {
-            $query->where('price', '<=', $request->price_max);
+            $price = $request->price_max;
+            if ($price == '1000000') {
+                $query->where('price', '<', 1000000);
+            } elseif ($price == '3000000') {
+                $query->whereBetween('price', [1000000, 3000000]);
+            } elseif ($price == '5000000') {
+                $query->whereBetween('price', [3000000, 5000000]);
+            } elseif ($price == '10000000') {
+                $query->where('price', '>', 5000000);
+            } else {
+                $query->where('price', '<=', $price);
+            }
         }
 
         $products = $query->latest()->get();
@@ -38,31 +62,28 @@ class ProductController extends Controller
         return view('products.create');
     }
 
-    // --- SỬA HÀM STORE ĐỂ LƯU NHIỀU ẢNH ---
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required',
             'brand' => 'required',
             'price' => 'required|numeric',
-            'image' => 'nullable|image|max:2048', // Bỏ mimes, chỉ cần dùng 'image' là Laravel tự hiểu các định dạng phổ biến
+            'image' => 'nullable|image|max:2048', 
             'gallery.*' => 'nullable|image|max:2048'
         ]);
 
         $data = $request->all();
 
-        // Xử lý ảnh chính
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        // Xử lý mảng ảnh phụ (Gallery)
         if ($request->hasFile('gallery')) {
             $galleryPaths = [];
             foreach ($request->file('gallery') as $file) {
                 $galleryPaths[] = $file->store('products', 'public');
             }
-            $data['gallery'] = $galleryPaths; // Model tự động convert sang JSON nhờ $casts
+            $data['gallery'] = $galleryPaths; 
         }
 
         Product::create($data);
@@ -76,7 +97,6 @@ class ProductController extends Controller
         return view('products.edit', compact('product'));
     }
 
-    // --- SỬA HÀM UPDATE ĐỂ CẬP NHẬT ẢNH PHỤ ---
     public function update(Request $request, $id)
     {
         $product = Product::findOrFail($id);
@@ -91,7 +111,6 @@ class ProductController extends Controller
 
         $data = $request->all();
 
-        // Cập nhật ảnh chính
         if ($request->hasFile('image')) {
             if ($product->image) {
                 Storage::disk('public')->delete($product->image);
@@ -99,9 +118,7 @@ class ProductController extends Controller
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
-        // Cập nhật ảnh phụ (Ghi đè hoặc thêm mới tùy bạn, ở đây là ghi đè danh sách cũ)
         if ($request->hasFile('gallery')) {
-            // Xóa ảnh cũ trong kho (nếu cần tiết kiệm dung lượng)
             if ($product->gallery) {
                 foreach ($product->gallery as $oldImg) {
                     Storage::disk('public')->delete($oldImg);
@@ -124,12 +141,10 @@ class ProductController extends Controller
     {
         $product = Product::findOrFail($id);
         
-        // Xóa ảnh chính
         if ($product->image) {
             Storage::disk('public')->delete($product->image);
         }
 
-        // Xóa toàn bộ ảnh trong gallery
         if ($product->gallery) {
             foreach ($product->gallery as $img) {
                 Storage::disk('public')->delete($img);

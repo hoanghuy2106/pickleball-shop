@@ -3,9 +3,10 @@
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProductController;
-use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\PageController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OrderController;
 /*
 |--------------------------------------------------------------------------
 | 1. TRANG CHỦ & NỘI DUNG TĨNH
@@ -15,16 +16,13 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/about', function () { return view('about'); })->name('introduction');
 Route::get('/contact', function () { return view('contact'); })->name('contact');
 
-
 /*
 |--------------------------------------------------------------------------
 | 2. QUẢN LÝ SẢN PHẨM (PUBLIC)
 |--------------------------------------------------------------------------
 */
 Route::get('/products', [ProductController::class, 'index'])->name('products.index');
-
-// QUAN TRỌNG: Phải để các route cố định (như /products/create) LÊN TRƯỚC các route có biến (như /{id})
-// Nếu không Laravel sẽ tưởng chữ "create" là một cái ID và báo lỗi.
+Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -32,23 +30,26 @@ Route::get('/products', [ProductController::class, 'index'])->name('products.ind
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
-    // 1. Chuyển Create lên đầu nhóm Auth
+    
+    // --- Quản lý sản phẩm (CRUD) ---
     Route::get('/products/create', [ProductController::class, 'create'])->name('products.create');
     Route::post('/products', [ProductController::class, 'store'])->name('products.store');
-    
-    // 2. Các thao tác sửa/xóa
     Route::get('/products/{id}/edit', [ProductController::class, 'edit'])->name('products.edit');
     Route::put('/products/{id}', [ProductController::class, 'update'])->name('products.update');
     Route::delete('/products/{id}', [ProductController::class, 'destroy'])->name('products.destroy');
 
-    // 3. Profile người dùng
+    // --- Profile & Dashboard (Fix lỗi Route admin.dashboard và profile.update) ---
     Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::get('/admin/dashboard', [AuthController::class, 'profile'])->name('admin.dashboard');
     Route::post('/profile/update', [AuthController::class, 'updateProfile'])->name('profile.update');
+
+    // --- Quản lý đơn hàng (Xử lý nút Xác nhận/Giao hàng/Hủy đơn) ---
+    // URL này khớp 100% với hàm fetch() trong file profile.blade.php
+    Route::post('/order/update-status/{id}', [AuthController::class, 'updateOrderStatus'])->name('admin.order.update');
+
+    // --- Đặt hàng (Checkout) ---
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 });
-
-// ROUTE SHOW (Chi tiết sản phẩm) PHẢI ĐỂ SAU CÙNG
-Route::get('/products/{id}', [ProductController::class, 'show'])->name('products.show');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -61,55 +62,29 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register']); 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+/*
+|--------------------------------------------------------------------------
+| 5. GIỎ HÀNG (SỬ DỤNG CONTROLLER)
+|--------------------------------------------------------------------------
+*/
+Route::prefix('cart')->name('cart.')->group(function () {
+    Route::get('/', [CartController::class, 'index'])->name('index');
+    Route::post('/add', [CartController::class, 'add'])->name('add');
+    Route::post('/remove/{id}', [CartController::class, 'remove'])->name('remove');
+    Route::patch('/update', [CartController::class, 'update'])->name('update');
+});
+
+// Alias cho JS gọi add-to-cart
+Route::post('/add-to-cart', [CartController::class, 'add']);
 
 /*
 |--------------------------------------------------------------------------
-| 5. GIỎ HÀNG (SESSION BASED)
+| 6. CÁC TRANG KHÁC
 |--------------------------------------------------------------------------
 */
-Route::get('/cart', function () {
-    $cart = session()->get('cart', []);
-    return view('products.cart', compact('cart'));
-})->name('cart.index');
-
-Route::post('/add-to-cart', function (Request $request) {
-    $cart = session()->get('cart', []);
-    $productName = $request->name;
-    
-    if(isset($cart[$productName])) {
-        $cart[$productName]['quantity']++;
-    } else {
-        $cart[$productName] = [
-            'name' => $request->name,
-            'brand' => $request->brand,
-            'price' => $request->price,
-            'image' => $request->image,
-            'quantity' => 1
-        ];
-    }
-    session()->put('cart', $cart);
-    return response()->json(['count' => count($cart)]);
-})->name('cart.add');
-
-Route::post('/cart/remove/{id}', function ($id) {
-    $cart = session()->get('cart', []);
-    if(isset($cart[$id])) {
-        unset($cart[$id]);
-        session()->put('cart', $cart);
-    }
-    return redirect()->back()->with('success', 'Đã xóa!');
-})->name('cart.remove');
-
-Route::patch('/cart/update', function (Request $request) {
-    $cart = session()->get('cart', []);
-    if($request->id && $request->quantity) {
-        $cart[$request->id]['quantity'] = $request->quantity;
-        session()->put('cart', $cart);
-        return response()->json(['message' => 'Updated']);
-    }
-})->name('cart.update');
-// Route cho trang Khám phá
 Route::get('/explore', [PageController::class, 'explore'])->name('explore');
-
-// Route cho trang Hỗ trợ
 Route::get('/support', [PageController::class, 'support'])->name('support');
+Route::get('/order/details/{id}', [OrderController::class, 'getDetails']);
+
+// Route cập nhật trạng thái (cho nút bấm Admin)
+Route::post('/order/update-status/{id}', [OrderController::class, 'updateStatus']);

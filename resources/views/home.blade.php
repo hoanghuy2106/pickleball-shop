@@ -112,31 +112,55 @@
     </section>
 
     <main class="max-w-7xl mx-auto py-24 px-8">
-        <div class="flex justify-between items-end mb-16">
-            <div>
-                <h3 class="text-4xl font-black text-white tracking-tighter uppercase italic">Sản Phẩm <span class="text-orange-500">Nổi Bật</span></h3>
-                <p class="text-gray-500 text-sm font-medium mt-2">Được tin dùng bởi các vận động viên hàng đầu thế giới.</p>
-            </div>
-            <a href="{{ url('/products') }}" class="text-gray-400 font-black text-xs uppercase tracking-[0.2em] hover:text-orange-500 transition">Xem tất cả →</a>
+    <div class="flex justify-between items-end mb-16">
+        <div>
+            <h3 class="text-4xl font-black text-white tracking-tighter uppercase italic">
+                Sản Phẩm <span class="text-orange-500">Nổi Bật</span>
+            </h3>
+            <p class="text-gray-500 text-sm font-medium mt-2">Được tin dùng bởi các vận động viên hàng đầu thế giới.</p>
         </div>
+        <a href="{{ url('/products') }}" class="text-gray-400 font-black text-xs uppercase tracking-[0.2em] hover:text-orange-500 transition">Xem tất cả →</a>
+    </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10">
+        @foreach($featuredProducts as $product)
             <div class="bg-[#111] p-6 rounded-[2.5rem] shadow-2xl hover:shadow-orange-900/10 transition-all duration-500 group border border-white/5 flex flex-col relative overflow-hidden">
+                
                 <div class="h-64 bg-[#1a1a1a] rounded-[2rem] mb-6 flex items-center justify-center overflow-hidden relative group-hover:bg-[#222] transition-colors">
-                    <img src="images/joola-p.png" class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-80 group-hover:opacity-100">
-                    <span class="absolute top-5 left-5 bg-orange-600 px-3 py-1 rounded-full text-[10px] font-black uppercase text-white shadow-lg">HOT</span>
+                    {{-- Đường dẫn ảnh động --}}
+                    <img src="{{ asset('storage/' . $product->image) }}" 
+                         alt="{{ $product->name }}" 
+                         class="w-full h-full object-cover group-hover:scale-110 transition duration-700 opacity-80 group-hover:opacity-100">
+                    
+                    {{-- Hiện tag HOT nếu trong DB đánh dấu là true --}}
+                    @if($product->is_hot)
+                        <span class="absolute top-5 left-5 bg-orange-600 px-3 py-1 rounded-full text-[10px] font-black uppercase text-white shadow-lg">HOT</span>
+                    @endif
                 </div>
+
                 <div class="px-2">
-                    <h4 class="text-xl font-bold text-white mb-2 group-hover:text-orange-500 transition">Joola Perseus 16mm</h4>
-                    <p class="text-gray-500 text-xs mb-6 line-clamp-2 leading-relaxed italic">Dòng vợt biểu tượng của Ben Johns với mặt Carbon mài tăng độ xoáy tối thượng.</p>
+                    <h4 class="text-xl font-bold text-white mb-2 group-hover:text-orange-500 transition">
+                        {{ $product->name }}
+                    </h4>
+                    <p class="text-gray-500 text-xs mb-6 line-clamp-2 leading-relaxed italic">
+                        {{ $product->description }}
+                    </p>
+                    
                     <div class="flex justify-between items-center border-t border-white/5 pt-6">
-                        <span class="text-2xl font-black text-white tracking-tighter">5.450.000<span class="text-sm text-gray-600 ml-1">đ</span></span>
-                        <button class="bg-white text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-orange-600 hover:text-white transition shadow-xl active:scale-95">Chi tiết</button>
+                        <span class="text-2xl font-black text-white tracking-tighter">
+                            {{ number_format($product->price, 0, ',', '.') }}<span class="text-sm text-gray-600 ml-1">đ</span>
+                        </span>
+                        {{-- Link đến trang chi tiết sản phẩm --}}
+                        <a href="{{ route('products.show', $product->id) }}" 
+                           class="bg-white text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase hover:bg-orange-600 hover:text-white transition shadow-xl active:scale-95">
+                           Chi tiết
+                        </a>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
+        @endforeach
+    </div>
+</main>
 
 <footer class="bg-[#050505] pt-24 pb-12 border-t border-white/5 relative overflow-hidden">
     <div class="absolute top-0 left-1/4 w-64 h-64 bg-orange-600/5 blur-[120px] rounded-full"></div>

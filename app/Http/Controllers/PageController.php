@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\Product;
 use Illuminate\Http\Request;
 use App\Models\Player; // 1. Đừng quên dòng này để Laravel hiểu Player là ai
 
@@ -23,4 +23,11 @@ class PageController extends Controller
     {
         return view('pages.support');
     }
+    public function index()
+{
+    // Lấy 3 hoặc 6 sản phẩm mới nhất hoặc có đánh dấu 'featured'
+    $featuredProducts = Product::latest()->take(3)->get(); 
+
+    return view('welcome', compact('featuredProducts'));
+}
 }

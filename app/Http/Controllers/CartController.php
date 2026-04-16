@@ -3,18 +3,16 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class CartController extends Controller
 {
-    // 1. Trang hiển thị giỏ hàng
     public function index()
     {
         $cart = session()->get('cart', []);
-        // Đảm bảo file view của ông nằm đúng đường dẫn resources/views/products/cart.blade.php
         return view('products.cart', compact('cart'));
     }
 
-    // 2. Thêm vào giỏ hàng (Dùng cho nút 30%, 70%)
     public function add(Request $request)
     {
         $cart = session()->get('cart', []);
@@ -40,7 +38,6 @@ class CartController extends Controller
         ]);
     }
 
-    // 3. XÓA SẢN PHẨM (Huy thiếu cái này nên lỗi nè)
     public function remove($id)
     {
         $cart = session()->get('cart', []);
@@ -53,14 +50,73 @@ class CartController extends Controller
         return redirect()->back()->with('success', 'Đã xóa sản phẩm khỏi giỏ hàng!');
     }
 
-    // 4. CẬP NHẬT SỐ LƯỢNG (Dành cho nút + -)
     public function update(Request $request)
     {
         if($request->id && $request->quantity) {
             $cart = session()->get('cart');
-            $cart[$request->id]["quantity"] = $request->quantity;
-            session()->put('cart', $cart);
-            return response()->json(['message' => 'Cập nhật thành công!']);
+            if(isset($cart[$request->id])) {
+                $cart[$request->id]["quantity"] = $request->quantity;
+                session()->put('cart', $cart);
+                return response()->json(['status' => 'success', 'message' => 'Cập nhật thành công!']);
+            }
         }
+        return response()->json(['status' => 'error'], 400);
+    }
+
+ public function checkout(Request $request)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Vui lòng đăng nhập!');
+        }
+
+        $request->validate([
+            'receiver_name' => 'required|string',
+            'phone' => 'required|string',
+            'address' => 'required|string',
+            'payment_method' => 'required|in:transfer,cod'
+        ]);
+
+        $cart = session()->get('cart', []);
+        if (empty($cart)) {
+            return redirect()->back()->with('error', 'Giỏ hàng trống!');
+        }
+
+        // 1. Tính tổng tiền
+        $totalAmount = 0;
+        foreach($cart as $item) {
+            $price = (int) str_replace([',', '.', 'đ'], '', $item['price']);
+            $totalAmount += $price * $item['quantity'];
+        }
+
+        // 2. Lưu vào bảng Orders (Sử dụng Model \App\Models\Order)
+        $order = \App\Models\Order::create([
+            'user_id' => Auth::id(),
+            'receiver_name' => $request->receiver_name,
+            'phone' => $request->phone,
+            'address' => $request->address,
+            'total_price' => $totalAmount,
+            'payment_method' => $request->payment_method,
+            'status' => 'pending'
+        ]);
+
+        // 3. Lưu chi tiết từng món vào bảng OrderItems
+        foreach($cart as $item) {
+            \App\Models\OrderItem::create([
+                'order_id' => $order->id,
+                'product_name' => $item['name'],
+                'price' => (int) str_replace([',', '.', 'đ'], '', $item['price']),
+                'quantity' => $item['quantity'],
+                'image' => $item['image']
+            ]);
+        }
+
+        // 4. Xóa giỏ hàng và thông báo
+        session()->forget('cart');
+
+        $message = $request->payment_method == 'transfer' 
+            ? 'Cảm ơn ông! Quét mã thành công, đơn hàng đang chờ xác nhận.' 
+            : 'Đặt hàng thành công! Trả tiền khi nhận hàng (COD) nhé.';
+
+        return redirect()->route('products.index')->with('success', $message);
     }
 }

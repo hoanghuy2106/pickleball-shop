@@ -4,24 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\Order;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // --- MỚI THÊM: Hàm hiển thị trang Đăng nhập ---
-    public function showLogin()
-    {
-        return view('auth.login');
-    }
+    public function showLogin() { return view('auth.login'); }
+    public function showRegister() { return view('auth.register'); }
 
-    // --- MỚI THÊM: Hàm hiển thị trang Đăng ký ---
-    public function showRegister()
-    {
-        return view('auth.register');
-    }
-
-    // 1. Xử lý Đăng ký (Khi bấm nút gửi Form)
     public function register(Request $request)
     {
         $request->validate([
@@ -37,12 +28,12 @@ class AuthController extends Controller
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
+            'role'     => 'user',
         ]);
 
         return redirect()->route('login')->with('success', 'Đăng ký thành công! Hãy đăng nhập.');
     }
 
-    // 2. Xử lý Đăng nhập (Khi bấm nút gửi Form)
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -52,15 +43,16 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+            
+            if (Auth::user()->role === 'admin') {
+                return redirect()->route('admin.dashboard'); 
+            }
             return redirect()->intended('/'); 
         }
 
-        return back()->withErrors([
-            'email' => 'Email hoặc mật khẩu không chính xác.',
-        ])->onlyInput('email');
+        return back()->withErrors(['email' => 'Email hoặc mật khẩu không chính xác.'])->onlyInput('email');
     }
 
-    // 3. Đăng xuất
     public function logout(Request $request)
     {
         Auth::logout();
@@ -68,36 +60,85 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
         return redirect('/');
     }
-public function profile() {
-    $user = Auth::user(); 
-    return view('auth.profile', compact('user'));
-}
-public function updateProfile(Request $request) 
-{
-    // 1. Lấy ID của user đang đăng nhập
-    $userId = Auth::id(); 
-    
-    // 2. Tìm chính xác Model User từ Database để kích hoạt đầy đủ tính năng của Eloquent
-    $user = User::findOrFail($userId); 
 
-    // 3. Kiểm tra dữ liệu đầu vào
-    $request->validate([
-        'name'    => 'required|string|max:255',
-        'phone'   => 'nullable|numeric|digits_between:10,11', 
-        'address' => 'nullable|string|max:500',
-    ], [
-        'phone.numeric' => 'Số điện thoại phải là chữ số!',
-        'phone.digits_between' => 'Số điện thoại phải từ 10 đến 11 số!',
-    ]);
+    public function profile() {
+        $user = Auth::user(); 
+        
+        // Lấy danh sách đơn hàng (Admin lấy hết, User lấy của mình)
+        if ($user->role === 'admin') {
+            $orders = Order::orderBy('created_at', 'desc')->get();
+        } else {
+            $orders = Order::where('user_id', $user->id)->orderBy('created_at', 'desc')->get();
+        }
 
-    // 4. Đổ dữ liệu vào Model và Lưu
-    $user->name = $request->name;
-    $user->phone = $request->phone;
-    $user->address = $request->address;
-    
-    $user->save();
+        return view('auth.profile', compact('user', 'orders'));
+    }
 
-    // 5. Quay lại trang cũ với thông báo cam xịn xò
-    return back()->with('success', 'Hệ thống đã cập nhật định danh mới!');
-}
+    public function updateProfile(Request $request) 
+    {
+        $user = User::findOrFail(Auth::id()); 
+
+        $request->validate([
+            'name'    => 'required|string|max:255',
+            'phone'   => 'nullable|numeric|digits_between:10,11', 
+            'address' => 'nullable|string|max:500',
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'address' => $request->address,
+        ]);
+
+        return back()->with('success', 'Hệ thống đã cập nhật định danh mới!');
+    }
+
+    /**
+     * Cập nhật trạng thái đơn hàng (Dành cho Admin)
+     */
+    public function updateOrderStatus(Request $request, $id)
+    {
+        // 1. Kiểm tra quyền Admin
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này!'], 403);
+        }
+
+        // 2. Tìm đơn hàng
+        $order = Order::find($id);
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn hàng #'.$id], 404);
+        }
+        
+        // 3. Logic chuyển đổi trạng thái (Khớp với View hiển thị)
+        $currentStatus = $order->status;
+        $nextStatus = '';
+
+        switch ($currentStatus) {
+            case 'pending':   
+                $nextStatus = 'confirmed'; // Xác nhận đơn
+                $msg = 'Đã xác nhận đơn hàng thành công!';
+                break;   
+            case 'confirmed': 
+                $nextStatus = 'shipping';  // Giao cho đơn vị vận chuyển
+                $msg = 'Đơn hàng đã được bàn giao vận chuyển!';
+                break; 
+            case 'shipping':  
+                $nextStatus = 'completed'; // Khách đã nhận hàng
+                $msg = 'Đơn hàng đã hoàn thành!';
+                break; 
+            default: 
+                $nextStatus = $currentStatus;
+                $msg = 'Trạng thái không thể thay đổi thêm.';
+        }
+
+        // 4. Cập nhật vào Database
+        $order->status = $nextStatus;
+        $order->save();
+
+        return response()->json([
+            'success' => true, 
+            'new_status' => $nextStatus,
+            'message' => $msg
+        ]);
+    }
 }
