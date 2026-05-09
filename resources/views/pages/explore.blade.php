@@ -37,31 +37,28 @@
     <div id="cursor-glow"></div>
 
     <nav class="bg-black/80 backdrop-blur-xl fixed w-full z-[100] border-b border-white/5">
-    <div class="max-w-7xl mx-auto flex justify-between items-center p-5 px-8">
-        <a href="{{ url('/') }}">
-            <h1 class="text-2xl font-black text-orange-500 tracking-tighter">SPORT Q&A</h1>
-        </a>
-        <div class="space-x-10 hidden md:flex items-center">
-            <a href="{{ url('/') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Trang chủ</a>
-            <a href="{{ url('/about') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Giới thiệu</a>
-            
-            <a href="{{ route('explore') }}" class="text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Khám phá</a>
-            
-            <a href="{{ route('support') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Hỗ trợ</a>
-            
-            <a href="{{ url('/products') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Sản phẩm</a>
-            <a href="{{ url('/contact') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Liên hệ</a>
-            
-            @auth
-                <div class="flex items-center space-x-5 border-l pl-8 border-white/10">
-                    <span class="text-[10px] font-bold uppercase text-white tracking-widest">{{ Auth::user()->name }}</span>
-                </div>
-            @else
-                <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-7 py-2.5 rounded-full font-black text-[10px] tracking-widest hover:bg-orange-700 transition">ĐĂNG NHẬP</a>
-            @endauth
+        <div class="max-w-7xl mx-auto flex justify-between items-center p-5 px-8">
+            <a href="{{ url('/') }}">
+                <h1 class="text-2xl font-black text-orange-500 tracking-tighter">SPORT Q&A</h1>
+            </a>
+            <div class="space-x-10 hidden md:flex items-center">
+                <a href="{{ url('/') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Trang chủ</a>
+                <a href="{{ url('/about') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Giới thiệu</a>
+                <a href="{{ route('explore') }}" class="text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Khám phá</a>
+                <a href="{{ route('support') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Hỗ trợ</a>
+                <a href="{{ url('/products') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Sản phẩm</a>
+                <a href="{{ url('/contact') }}" class="text-gray-400 hover:text-orange-500 font-bold text-[11px] uppercase tracking-widest transition">Liên hệ</a>
+                
+                @auth
+                    <div class="flex items-center space-x-5 border-l pl-8 border-white/10">
+                        <span class="text-[10px] font-bold uppercase text-white tracking-widest">{{ Auth::user()->name }}</span>
+                    </div>
+                @else
+                    <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-7 py-2.5 rounded-full font-black text-[10px] tracking-widest hover:bg-orange-700 transition">ĐĂNG NHẬP</a>
+                @endauth
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-7xl mx-auto pt-48 pb-32 px-8 relative z-10">
         <div class="mb-24 text-center md:text-left">
@@ -103,6 +100,29 @@
                 </div>
             </div>
         </div>
+
+        <div class="mt-32">
+            <h3 class="text-3xl font-black uppercase italic mb-12 tracking-tighter border-l-4 border-orange-500 pl-6">Cẩm nang kỹ thuật</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="glass-card p-8 rounded-[2rem] hover:border-orange-500/30 transition-all group cursor-pointer">
+                    <span class="text-[10px] text-orange-500 font-bold tracking-widest uppercase">Master Class</span>
+                    <h4 class="text-xl font-bold mt-2 mb-4 group-hover:text-orange-500 transition-colors">Cú Third Shot Drop</h4>
+                    <p class="text-gray-500 text-sm">Bí quyết kiểm soát lực tay để đưa bóng vào khu vực non-volley zone chuẩn xác.</p>
+                </div>
+                
+                <div class="glass-card p-8 rounded-[2rem] hover:border-orange-500/30 transition-all group cursor-pointer">
+                    <span class="text-[10px] text-orange-500 font-bold tracking-widest uppercase">Strategy</span>
+                    <h4 class="text-xl font-bold mt-2 mb-4 group-hover:text-orange-500 transition-colors">Chiến thuật chiếm lưới</h4>
+                    <p class="text-gray-500 text-sm">Cách phối hợp di chuyển cùng đồng đội để tạo áp lực liên tục lên đối thủ.</p>
+                </div>
+
+                <div class="glass-card p-8 rounded-[2rem] hover:border-orange-500/30 transition-all group cursor-pointer">
+                    <span class="text-[10px] text-orange-500 font-bold tracking-widest uppercase">Equipment</span>
+                    <h4 class="text-xl font-bold mt-2 mb-4 group-hover:text-orange-500 transition-colors">Trọng lượng vợt</h4>
+                    <p class="text-gray-500 text-sm">Phân tích sự khác biệt giữa Midweight và Lightweight đối với lối chơi thực chiến.</p>
+                </div>
+            </div>
+        </div>
     </main>
 
     <div id="techModal" class="fixed inset-0 z-[110] hidden flex items-center justify-center p-6">
@@ -111,18 +131,40 @@
             <button onclick="closeTechModal()" class="absolute top-8 right-8 text-gray-500 hover:text-white uppercase text-[10px] font-black tracking-widest transition">Đóng [x]</button>
             <h3 class="text-5xl font-black uppercase italic tracking-tighter mb-12">CÔNG NGHỆ <span class="text-gradient">LÕI VỢT</span></h3>
             
-            <div class="max-h-[450px] overflow-y-auto pr-6 custom-scrollbar space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-6 border-b border-white/5">
+            <div class="max-h-[450px] overflow-y-auto pr-6 custom-scrollbar space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b border-white/5">
                     <div>
                         <span class="text-orange-500 font-black text-xl italic block mb-2">01. Carbon T700 Raw</span>
-                        <p class="text-gray-400 text-sm leading-relaxed">Bề mặt nhám tự nhiên giúp bám bóng cực lâu, tạo ra những cú xoáy (spin) không thể cản phá.</p>
+                        <p class="text-gray-400 text-sm leading-relaxed font-medium">Sử dụng sợi Carbon cường độ cao với bề mặt nhám tự nhiên, tối ưu hóa thời gian tiếp xúc bóng để tạo ra độ xoáy vượt trội.</p>
                     </div>
                     <div class="flex gap-4 items-center">
-                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic">+45% <span class="text-[8px] block not-italic text-gray-500 uppercase">Độ xoáy</span></div>
-                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic">PRO <span class="text-[8px] block not-italic text-gray-500 uppercase">Cấp độ</span></div>
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic"><span class="text-orange-500 text-lg">+45%</span> <span class="text-[8px] block not-italic text-gray-500 uppercase">Độ xoáy</span></div>
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic text-white">PRO <span class="text-[8px] block not-italic text-gray-500 uppercase">Cấp độ</span></div>
                     </div>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-8 border-b border-white/5">
+                    <div>
+                        <span class="text-orange-500 font-black text-xl italic block mb-2">02. Lõi Honeycomb 16mm</span>
+                        <p class="text-gray-400 text-sm leading-relaxed font-medium">Cấu trúc tổ ong Polypropylene giúp giảm rung chấn tối đa, mang lại khả năng kiểm soát bóng điêu luyện.</p>
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic"><span class="text-orange-500 text-lg">MAX</span> <span class="text-[8px] block not-italic text-gray-500 uppercase">Kiểm soát</span></div>
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic text-white">16MM <span class="text-[8px] block not-italic text-gray-500 uppercase">Độ dày</span></div>
+                    </div>
                 </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 py-8">
+                    <div>
+                        <span class="text-orange-500 font-black text-xl italic block mb-2">03. Cấu trúc Aero-Curve</span>
+                        <p class="text-gray-400 text-sm leading-relaxed font-medium">Thiết kế đầu vợt cong khí động học giúp tăng tốc độ vung vợt (swing speed), tối ưu cho các pha phản xạ nhanh.</p>
+                    </div>
+                    <div class="flex gap-4 items-center">
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic"><span class="text-orange-500 text-lg">+12%</span> <span class="text-[8px] block not-italic text-gray-500 uppercase">Tốc độ vung</span></div>
+                        <div class="bg-white/5 p-4 rounded-2xl flex-1 text-center font-black italic text-white">FAST <span class="text-[8px] block not-italic text-gray-500 uppercase">Phản xạ</span></div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -134,20 +176,23 @@
                 <span class="text-orange-500 font-black text-[10px] tracking-[0.5em] uppercase italic mb-2 block">Global Standings</span>
                 <h3 class="text-4xl font-black uppercase italic tracking-tighter">SQA ELITE <span class="text-gradient">RANKING</span></h3>
             </div>
-
             <div class="space-y-3 max-h-[400px] overflow-y-auto pr-4 custom-scrollbar">
-                @foreach($topPlayers as $key => $player)
-                    <div class="flex items-center justify-between p-5 rounded-3xl bg-white/5 border border-white/5 hover:bg-orange-600 transition-all duration-300 group">
-                        <div class="flex items-center gap-6">
-                            <span class="text-2xl font-black italic text-gray-600 group-hover:text-white">0{{ $key + 1 }}</span>
-                            <div>
-                                <p class="text-white font-black uppercase text-sm group-hover:text-black">{{ $player->name }}</p>
-                                <p class="text-gray-500 text-[9px] uppercase font-bold tracking-widest group-hover:text-black/60">{{ $player->rank_title }}</p>
+                @if(isset($topPlayers))
+                    @foreach($topPlayers as $key => $player)
+                        <div class="flex items-center justify-between p-5 rounded-3xl bg-white/5 border border-white/5 hover:bg-orange-600 transition-all duration-300 group">
+                            <div class="flex items-center gap-6">
+                                <span class="text-2xl font-black italic text-gray-600 group-hover:text-white">0{{ $key + 1 }}</span>
+                                <div>
+                                    <p class="text-white font-black uppercase text-sm group-hover:text-black">{{ $player->name }}</p>
+                                    <p class="text-gray-500 text-[9px] uppercase font-bold tracking-widest group-hover:text-black/60">{{ $player->rank_title }}</p>
+                                </div>
                             </div>
+                            <span class="text-xl font-black text-orange-500 italic group-hover:text-black">{{ number_format($player->elo_points) }} PTS</span>
                         </div>
-                        <span class="text-xl font-black text-orange-500 italic group-hover:text-black">{{ number_format($player->elo_points) }} PTS</span>
-                    </div>
-                @endforeach
+                    @endforeach
+                @else
+                    <p class="text-center text-gray-500 italic">Dữ liệu đang được cập nhật...</p>
+                @endif
             </div>
         </div>
     </div>
@@ -158,11 +203,9 @@
 
         // Hiệu ứng chuột
         document.addEventListener('mousemove', (e) => {
-            // Glow chạy theo chuột
             glow.style.left = e.clientX + 'px';
             glow.style.top = e.clientY + 'px';
 
-            // Parallax Tilt cho Card
             const rect = mainCard.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -178,7 +221,7 @@
             mainCard.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
         });
 
-        // Modals
+        // Modals Functions
         function openTechModal() { document.getElementById('techModal').classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
         function closeTechModal() { document.getElementById('techModal').classList.add('hidden'); document.body.style.overflow = 'auto'; }
         

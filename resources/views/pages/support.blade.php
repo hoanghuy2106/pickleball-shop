@@ -104,7 +104,7 @@
                     <div class="h-4 w-[1px] bg-white/10"></div>
                     <span class="text-[10px] font-bold uppercase text-white tracking-widest italic">{{ Auth::user()->name }}</span>
                 @else
-                    <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-6 py-2 rounded-full font-black text-[10px] tracking-widest hover:bg-orange-700 transition">LOGIN</a>
+                    <a href="{{ url('/login') }}" class="bg-orange-600 text-white px-6 py-2 rounded-full font-black text-[10px] tracking-widest hover:bg-orange-700 transition">ĐĂNG NHẬP</a>
                 @endauth
             </div>
         </div>

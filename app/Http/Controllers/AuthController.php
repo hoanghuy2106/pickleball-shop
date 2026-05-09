@@ -96,49 +96,77 @@ class AuthController extends Controller
     /**
      * Cập nhật trạng thái đơn hàng (Dành cho Admin)
      */
-    public function updateOrderStatus(Request $request, $id)
-    {
-        // 1. Kiểm tra quyền Admin
-        if (Auth::user()->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Bạn không có quyền thực hiện thao tác này!'], 403);
-        }
-
-        // 2. Tìm đơn hàng
-        $order = Order::find($id);
-        if (!$order) {
-            return response()->json(['success' => false, 'message' => 'Không tìm thấy đơn hàng #'.$id], 404);
-        }
-        
-        // 3. Logic chuyển đổi trạng thái (Khớp với View hiển thị)
-        $currentStatus = $order->status;
-        $nextStatus = '';
-
-        switch ($currentStatus) {
-            case 'pending':   
-                $nextStatus = 'confirmed'; // Xác nhận đơn
-                $msg = 'Đã xác nhận đơn hàng thành công!';
-                break;   
-            case 'confirmed': 
-                $nextStatus = 'shipping';  // Giao cho đơn vị vận chuyển
-                $msg = 'Đơn hàng đã được bàn giao vận chuyển!';
-                break; 
-            case 'shipping':  
-                $nextStatus = 'completed'; // Khách đã nhận hàng
-                $msg = 'Đơn hàng đã hoàn thành!';
-                break; 
-            default: 
-                $nextStatus = $currentStatus;
-                $msg = 'Trạng thái không thể thay đổi thêm.';
-        }
-
-        // 4. Cập nhật vào Database
-        $order->status = $nextStatus;
-        $order->save();
-
-        return response()->json([
-            'success' => true, 
-            'new_status' => $nextStatus,
-            'message' => $msg
-        ]);
+/**
+ * Lấy dữ liệu báo cáo doanh thu (Chỉ Admin mới xem được)
+ */
+public function getRevenueStats(Request $request)
+{
+    if (Auth::user()->role !== 'admin') {
+        return response()->json(['success' => false, 'message' => 'Quyền hạn từ chối'], 403);
     }
+
+    $period = $request->query('period', 'month');
+    $query = Order::query();
+
+    if ($period == 'day') { $query->whereDate('created_at', today()); } 
+    elseif ($period == 'month') { $query->whereMonth('created_at', now()->month); }
+    elseif ($period == 'year') { $query->whereYear('created_at', now()->year); }
+
+    // LOGIC: Doanh thu = Đơn 'completed' (bao gồm cả COD và Transfer đã xong)
+    $totalRevenue = $query->clone()->where('status', 'completed')->sum('total_price');
+    $orderCount = $query->clone()->where('status', 'completed')->count();
+    $averageOrder = $orderCount > 0 ? $totalRevenue / $orderCount : 0;
+
+    return response()->json([
+        'success' => true,
+        'data' => [
+            'total' => $totalRevenue,
+            'count' => $orderCount,
+            'avg' => $averageOrder
+        ]
+    ]);
+}
+
+/**
+ * Hủy đơn hàng (Cả Admin và Khách đều dùng được)
+ */
+public function cancelOrder($id)
+{
+    $order = Order::findOrFail($id);
+    $user = Auth::user();
+
+    // Khách chỉ được hủy đơn của mình và khi đơn đang ở trạng thái 'pending'
+    if ($user->role !== 'admin') {
+        if ($order->user_id !== $user->id) return response()->json(['success' => false, 'message' => 'Không có quyền!'], 403);
+        if ($order->status !== 'pending') return response()->json(['success' => false, 'message' => 'Chỉ có thể hủy khi đơn đang chờ xác nhận!'], 400);
+    }
+
+    $order->status = 'cancelled';
+    $order->save();
+
+    return response()->json(['success' => true, 'message' => 'Đã hủy đơn hàng thành công!']);
+}
+
+/**
+ * Cập nhật trạng thái (Admin dùng để chốt đơn hoàn thành)
+ */
+public function updateOrderStatus(Request $request, $id)
+{
+    if (Auth::user()->role !== 'admin') return response()->json(['success' => false], 403);
+
+    $order = Order::findOrFail($id);
+    $statusMap = [
+        'pending' => 'confirmed',
+        'confirmed' => 'shipping',
+        'shipping' => 'completed'
+    ];
+
+    if (isset($statusMap[$order->status])) {
+        $order->status = $statusMap[$order->status];
+        $order->save();
+        return response()->json(['success' => true, 'new_status' => $order->status]);
+    }
+
+    return response()->json(['success' => false, 'message' => 'Không thể chuyển trạng thái']);
+}
 }

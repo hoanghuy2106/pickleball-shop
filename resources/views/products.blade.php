@@ -77,9 +77,7 @@
                 <a href="{{ url('/about') }}" class="text-gray-400 hover:text-orange-500 transition">Giới thiệu</a>
                 <a href="{{ route('explore') }}" class="text-gray-400 hover:text-orange-500 transition">Khám phá</a>
                 <a href="{{ route('support') }}" class="text-gray-400 hover:text-orange-500 transition">Hỗ trợ</a>
-                
                 <a href="{{ route('products.index') }}" class="text-orange-500 border-b-2 border-orange-500 pb-1">Cửa hàng</a>
-                
                 <a href="{{ url('/contact') }}" class="text-gray-400 hover:text-orange-500 transition">Liên hệ</a>
             </div>
 
@@ -92,9 +90,15 @@
 
             @auth
             <div class="flex items-center space-x-5 border-l pl-8 border-white/10">
-                <a href="{{ route('products.create') }}" class="bg-orange-600 hover:bg-white text-white hover:text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all italic shadow-lg shadow-orange-900/20">
-                    + Thêm siêu phẩm
-                </a>
+                {{-- CHỈ HIỆN NÚT THÊM NẾU LÀ ADMIN --}}
+@auth
+    @can('admin-only')
+        <a href="{{ route('products.create') }}" class="bg-orange-600 hover:bg-white text-white hover:text-black px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all italic shadow-lg shadow-orange-900/20">
+            + Thêm siêu phẩm
+        </a>
+    @endcan
+@endauth
+                
                 <a href="{{ route('profile') }}" class="group flex items-center gap-3">
                     <b class="text-white text-[10px] uppercase tracking-widest group-hover:text-orange-500 transition">{{ Auth::user()->name }}</b>
                 </a>
@@ -227,14 +231,17 @@
                         </a>
                         
                         <div class="mt-auto px-1 pb-2">
+                            {{-- CHỈ HIỆN SỬA/XÓA NẾU LÀ ADMIN --}}
                             @auth
-                            <div class="flex gap-1.5 mb-2">
-                                <a href="{{ route('products.edit', $product->id) }}" class="flex-1 text-center bg-[#222] text-gray-500 py-2.5 rounded-xl text-[8px] font-black uppercase hover:bg-orange-600 hover:text-white transition-all border border-white/5">Sửa</a>
-                                <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="flex-1" onsubmit="return confirm('Xóa siêu phẩm này?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="w-full bg-[#222] text-gray-700 py-2.5 rounded-xl text-[8px] font-black uppercase hover:bg-red-600 hover:text-white transition-all border border-white/5">Xóa</button>
-                                </form>
-                            </div>
+                                @if(Auth::user()->role === 'admin')
+                                <div class="flex gap-1.5 mb-2">
+                                    <a href="{{ route('products.edit', $product->id) }}" class="flex-1 text-center bg-[#222] text-gray-500 py-2.5 rounded-xl text-[8px] font-black uppercase hover:bg-orange-600 hover:text-white transition-all border border-white/5">Sửa</a>
+                                    <form action="{{ route('products.destroy', $product->id) }}" method="POST" class="flex-1" onsubmit="return confirm('Xóa siêu phẩm này?')">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="w-full bg-[#222] text-gray-700 py-2.5 rounded-xl text-[8px] font-black uppercase hover:bg-red-600 hover:text-white transition-all border border-white/5">Xóa</button>
+                                    </form>
+                                </div>
+                                @endif
                             @endauth
 
                             <div class="flex gap-2">

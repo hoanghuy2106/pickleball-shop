@@ -3,16 +3,47 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product; 
+use App\Models\User; // Thêm dòng này
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class ProductController extends Controller
+class ProductController extends Controller implements HasMiddleware
 {
+    /**
+     * Cấu hình Middleware theo chuẩn Laravel 11.
+     */
+    public static function middleware(): array
+    {
+        return [
+            new Middleware('auth', except: ['index', 'show']),
+        ];
+    }
+
+    /**
+     * Kiểm tra quyền Admin (Ép kiểu để xóa gạch đỏ VS Code).
+     */
+    private function isAdmin(): bool
+    {
+        // Ép kiểu trực tiếp về Model User để VS Code nhận diện được thuộc tính role
+        $user = Auth::user();
+        
+        if ($user instanceof User) {
+            return $user->role === 'admin';
+        }
+
+        return false;
+    }
+
+    /**
+     * Danh sách sản phẩm kèm bộ lọc.
+     */
     public function index(Request $request)
     {
         $query = Product::query();
 
-        // 1. Tìm kiếm theo từ khóa (Mới thêm)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -22,7 +53,6 @@ class ProductController extends Controller
             });
         }
 
-        // 2. Lọc theo danh mục
         if ($request->has('categories') && is_array($request->categories)) {
             $query->where(function($q) use ($request) {
                 foreach ($request->categories as $category) {
@@ -32,12 +62,10 @@ class ProductController extends Controller
             });
         }
 
-        // 3. Lọc theo thương hiệu
         if ($request->filled('brand')) {
             $query->where('brand', 'LIKE', $request->brand);
         }
 
-        // 4. Lọc theo giá (Đã giữ nguyên logic của bạn)
         if ($request->filled('price_max')) {
             $price = $request->price_max;
             if ($price == '1000000') {
@@ -59,11 +87,18 @@ class ProductController extends Controller
 
     public function create()
     {
+        if (!$this->isAdmin()) {
+            return redirect()->route('products.index')->with('error', 'Chỉ Admin mới có quyền truy cập!');
+        }
         return view('products.create');
     }
 
     public function store(Request $request)
     {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
         $request->validate([
             'name' => 'required',
             'brand' => 'required',
@@ -88,17 +123,30 @@ class ProductController extends Controller
 
         Product::create($data);
 
-        return redirect()->route('products.index')->with('success', 'Thêm siêu phẩm thành công!');
+        return redirect()->route('products.index')->with('success', 'Thêm sản phẩm thành công!');
+    }
+
+    public function show($id)
+    {
+        $product = Product::findOrFail($id); 
+        return view('products.show', compact('product'));
     }
 
     public function edit($id)
     {
+        if (!$this->isAdmin()) {
+            return redirect()->route('products.index')->with('error', 'Bạn không có quyền sửa!');
+        }
         $product = Product::findOrFail($id);
         return view('products.edit', compact('product'));
     }
 
     public function update(Request $request, $id)
     {
+        if (!$this->isAdmin()) {
+            abort(403);
+        }
+
         $product = Product::findOrFail($id);
         
         $request->validate([
@@ -112,9 +160,7 @@ class ProductController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('image')) {
-            if ($product->image) {
-                Storage::disk('public')->delete($product->image);
-            }
+            if ($product->image) Storage::disk('public')->delete($product->image);
             $data['image'] = $request->file('image')->store('products', 'public');
         }
 
@@ -124,7 +170,6 @@ class ProductController extends Controller
                     Storage::disk('public')->delete($oldImg);
                 }
             }
-
             $galleryPaths = [];
             foreach ($request->file('gallery') as $file) {
                 $galleryPaths[] = $file->store('products', 'public');
@@ -133,31 +178,22 @@ class ProductController extends Controller
         }
 
         $product->update($data);
-
         return redirect()->route('products.index')->with('success', 'Cập nhật thành công!');
     }
 
     public function destroy($id)
     {
-        $product = Product::findOrFail($id);
-        
-        if ($product->image) {
-            Storage::disk('public')->delete($product->image);
+        if (!$this->isAdmin()) {
+            return back()->with('error', 'Bạn không có quyền xóa!');
         }
 
+        $product = Product::findOrFail($id);
+        if ($product->image) Storage::disk('public')->delete($product->image);
         if ($product->gallery) {
-            foreach ($product->gallery as $img) {
-                Storage::disk('public')->delete($img);
-            }
+            foreach ($product->gallery as $img) Storage::disk('public')->delete($img);
         }
 
         $product->delete();
-        return back()->with('success', 'Đã xóa siêu phẩm khỏi hệ thống!');
-    }
-
-    public function show($id)
-    {
-        $product = Product::findOrFail($id); 
-        return view('products.show', compact('product'));
+        return back()->with('success', 'Đã xóa sản phẩm!');
     }
 }

@@ -13,8 +13,7 @@ class OrderController extends Controller
      */
     public function getDetails($id)
     {
-        // FIX: Trong JS bạn đang dùng 'order_items', nên ở đây ta load đúng quan hệ đó
-        // Đảm bảo trong Model Order bạn đã định nghĩa public function order_items()
+        // Load quan hệ orderItems và product để lấy tên/ảnh sản phẩm
         $order = Order::with(['orderItems.product'])->find($id);
 
         if (!$order) {
@@ -24,7 +23,7 @@ class OrderController extends Controller
             ], 404);
         }
 
-        // Ép dữ liệu về Array để đảm bảo JS nhận diện đúng các trường underscore (order_items)
+        // Dữ liệu trả về bao gồm receiver_name, phone, address (mặc định có trong table orders)
         return response()->json([
             'success' => true,
             'data' => $order->toArray() 
@@ -32,7 +31,7 @@ class OrderController extends Controller
     }
 
     /**
-     * Cập nhật trạng thái đơn hàng
+     * Cập nhật trạng thái đơn hàng (Admin)
      */
     public function updateStatus(Request $request, $id)
     {
@@ -43,14 +42,14 @@ class OrderController extends Controller
                 return response()->json(['success' => false, 'message' => 'Đơn hàng không tồn tại.']);
             }
 
-            $currentStatus = trim($order->status); // Khử khoảng trắng để tránh lỗi SQL
+            $currentStatus = trim($order->status);
             $nextStatus = $currentStatus;
 
+            // Logic chuyển đổi trạng thái
             if ($currentStatus == 'pending') $nextStatus = 'confirmed';
             elseif ($currentStatus == 'confirmed') $nextStatus = 'shipping';
             elseif ($currentStatus == 'shipping') $nextStatus = 'completed';
 
-            // FIX LỖI 1265: Ép kiểu dữ liệu và lưu
             $order->status = (string)$nextStatus;
             $order->save();
 
@@ -61,13 +60,39 @@ class OrderController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            // Log lỗi ra file storage/logs/laravel.log để bạn kiểm tra nếu vẫn lỗi SQL
             Log::error("Lỗi update đơn hàng: " . $e->getMessage());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Lỗi hệ thống: ' . $e->getMessage()
             ], 500);
         }
     }
+    public function cancel($id)
+{
+    try {
+        $order = \App\Models\Order::findOrFail($id);
+
+        // Kiểm tra quyền: Chỉ Admin hoặc chính chủ đơn hàng mới được hủy
+        // Và chỉ được hủy khi đơn hàng đang ở trạng thái 'pending'
+        if ($order->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể hủy đơn hàng đã được xử lý!'
+            ]);
+        }
+
+        $order->status = 'cancelled';
+        $order->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã hủy đơn hàng thành công.'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Lỗi hệ thống: ' . $e->getMessage()
+        ]);
+    }
+}
 }

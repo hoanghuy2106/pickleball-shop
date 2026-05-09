@@ -14,7 +14,6 @@
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        /* Tùy chỉnh thông báo cho tiệp với style tối của ông */
         .swal2-popup { border-radius: 2rem !important; background: #121212 !important; border: 1px solid rgba(255,255,255,0.1) !important; }
         .swal2-title, .swal2-html-container { font-family: 'Plus Jakarta Sans', sans-serif !important; }
     </style>
@@ -167,7 +166,7 @@
             </svg>
         </button>
 
-        <h3 class="text-orange-600 font-black italic uppercase tracking-tighter text-2xl mb-1">Techcombank QR</h3>
+        <h3 class="text-orange-600 font-black italic uppercase tracking-tighter text-2xl mb-1">MB Bank QR</h3>
         <p class="text-[9px] text-gray-500 uppercase font-bold mb-6 tracking-[0.2em]">Quét để thanh toán tự động</p>
 
         <div class="bg-white p-4 rounded-[2rem] mb-6 shadow-inner flex justify-center">
@@ -183,21 +182,28 @@
                 <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Chủ tài khoản</p>
                 <p id="qr-name-display" class="text-[11px] font-bold text-gray-300 uppercase">---</p>
             </div>
+            <div>
+                <p class="text-[8px] text-gray-500 uppercase font-black mb-1">Nội dung chuyển khoản</p>
+                <p id="qr-desc-display" class="text-[11px] font-bold text-orange-500 uppercase tracking-widest">---</p>
+            </div>
         </div>
 
-        <button type="button" onclick="submitFinalForm()" class="w-full bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-[10px] hover:bg-white hover:text-black transition-all shadow-lg shadow-orange-600/20">
-            Tôi đã chuyển khoản xong →
-        </button>
+        <div class="flex items-center justify-center gap-2 text-[10px] text-gray-500 font-bold uppercase animate-pulse">
+            <div class="w-2 h-2 bg-orange-600 rounded-full"></div>
+            Đang chờ hệ thống xác nhận...
+        </div>
     </div>
 </div>
 
 <script>
-    // --- 1. CẤU HÌNH ---
+    // --- 1. CẤU HÌNH MB BANK CỦA HUY ---
     const MY_BANK = {
-        BANK_ID: "tcb",
-        ACCOUNT_NO: "45200421062004",
+        BANK_ID: "mb",
+        ACCOUNT_NO: "0843006586666",
         ACCOUNT_NAME: "HOANG TIEN HUY"
     };
+
+    let checkPaymentInterval;
 
     // --- 2. CẬP NHẬT GIỎ HÀNG ---
     async function changeQty(btn, delta) {
@@ -243,44 +249,77 @@
         document.getElementById('grand-total').innerText = formatted;
     }
 
-    // --- 3. XỬ LÝ THANH TOÁN & THÔNG BÁO ---
+    // --- 3. XỬ LÝ THANH TOÁN & AUTO-CHECK ---
     const checkoutForm = document.getElementById('checkout-form');
 
     checkoutForm.onsubmit = function(e) {
         const method = document.querySelector('input[name="payment_method"]:checked').value;
-
         if (method === 'transfer') {
             e.preventDefault(); 
             showQR();
         } else {
-            // Thanh toán COD - Hiện thông báo thành công luôn
             e.preventDefault();
-            showSuccessAlert();
+            showSuccessAlert("Đơn hàng COD đã được hệ thống ghi nhận!");
         }
     };
 
     function showQR() {
         const amountStr = document.getElementById('grand-total').innerText;
         const amount = amountStr.replace(/[^0-9]/g, ''); 
-        const receiver = document.getElementById('receiver_name').value || "Khách hàng";
-        const desc = `THANH TOAN SPORTQA ${receiver}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        
+        // Tạo mã đơn hàng duy nhất để Casso lọc (Ví dụ: SQA9999)
+        const orderCode = "SQA" + Math.floor(1000 + Math.random() * 9000);
 
-        const qrUrl = `https://img.vietqr.io/image/${MY_BANK.BANK_ID}-${MY_BANK.ACCOUNT_NO}-compact.png?amount=${amount}&addInfo=${encodeURIComponent(desc)}&accountName=${encodeURIComponent(MY_BANK.ACCOUNT_NAME)}`;
+        // URL VietQR chuẩn
+        const qrUrl = `https://img.vietqr.io/image/${MY_BANK.BANK_ID}-${MY_BANK.ACCOUNT_NO}-compact.png?amount=${amount}&addInfo=${orderCode}&accountName=${encodeURIComponent(MY_BANK.ACCOUNT_NAME)}`;
 
         document.getElementById('qr-image').src = qrUrl;
         document.getElementById('qr-amount-display').innerText = amountStr;
         document.getElementById('qr-name-display').innerText = MY_BANK.ACCOUNT_NAME;
+        document.getElementById('qr-desc-display').innerText = orderCode;
         document.getElementById('qr-modal').classList.remove('hidden');
+
+        // Bắt đầu check tiền tự động mỗi 3 giây
+        startCheckingPayment(orderCode);
     }
 
+    function startCheckingPayment(orderCode) {
+    if (checkPaymentInterval) clearInterval(checkPaymentInterval);
+
+    checkPaymentInterval = setInterval(async () => {
+        try {
+            // SỬA DÒNG NÀY: Bỏ chữ /api/ ở đầu vì Laravel 11 API Route đã tự hiểu prefix rồi
+            // Hoặc nếu ông viết trong api.php là Route::get('/check-payment/...') 
+            // thì JS chỉ cần gọi đúng cái path đó thôi.
+            const response = await fetch(`/api/check-payment/${orderCode}`); 
+            
+            // LƯU Ý: Nếu ông check trên trình duyệt mà link đúng là:
+            // http://127.0.0.1:8000/api/check-payment/SQAxxxx 
+            // thì code JS hiện tại của ông là ĐÚNG. 
+            // NHƯNG nếu link đúng là http://127.0.0.1:8000/api/api/check-payment/...
+            // thì ông phải bỏ bớt 1 chữ api đi trong file api.php nhé!
+            
+            const data = await response.json();
+
+            if (data.status === 'paid') {
+                clearInterval(checkPaymentInterval);
+                closeQR();
+                showSuccessAlert("Giao dịch thành công! Hệ thống Elite đã xác nhận tiền.");
+            }
+        } catch (e) {
+            console.log("Đang đợi thanh toán...");
+        }
+    }, 3000);
+}
     function closeQR() {
         document.getElementById('qr-modal').classList.add('hidden');
+        if (checkPaymentInterval) clearInterval(checkPaymentInterval);
     }
 
-    function showSuccessAlert() {
+    function showSuccessAlert(message) {
         Swal.fire({
-            title: 'MUA HÀNG THÀNH CÔNG!',
-            text: 'Đơn hàng của ông đang được hệ thống Elite điều phối.',
+            title: 'THÀNH CÔNG!',
+            text: message,
             icon: 'success',
             background: '#0a0a0a',
             color: '#fff',
@@ -291,11 +330,6 @@
         }).then(() => {
             checkoutForm.submit(); 
         });
-    }
-
-    function submitFinalForm() {
-        closeQR();
-        showSuccessAlert();
     }
 </script>
 </body>
